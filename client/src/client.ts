@@ -33,6 +33,9 @@ const client = new Client('http://localhost:3000/webhook', {
       enabled: false,
     },
   },
+  store: {
+    shouldPersistSession: false,
+  },
 });
 
 makeObservable<AudioRecorder & any>(client.audioRecorder, {
