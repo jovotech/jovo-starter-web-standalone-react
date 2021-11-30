@@ -1,15 +1,12 @@
 import {
-  Action,
-  ActionType,
   AudioHelper,
   ClientEvent,
-  RequestType,
+  ClientRequest,
+  NormalizedOutputTemplate,
   SpeechRecognizerEvent,
   SpeechSynthesizerEvent,
-  WebRequest,
-  WebResponse,
-} from 'jovo-client-web';
-import {observer} from 'mobx-react-lite';
+} from '@jovotech/client-web';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
 import client from './client';
 import RecordButton from './components/RecordButton';
@@ -22,7 +19,7 @@ interface AppState {
 }
 
 const AppView = observer(({ inputText, outputText }: { inputText: string; outputText: string }) => {
-  const content = !client.$speechRecognizer.isAvailable ? (
+  const content = !client.speechRecognizer.isAvailable ? (
     <div className="px-8">
       <p className="text-lg text-center text-gray-800 dark:text-gray-400">
         This demo uses the Chrome Web Speech API, which unfortunately isn't supported in this
@@ -60,18 +57,16 @@ class App extends React.Component<AppProps, AppState> {
 
   componentDidMount() {
     client.on(ClientEvent.Request, this.onRequest);
-    client.on(ClientEvent.Response, this.onResponse);
-    client.on(ClientEvent.Action, this.onAction);
-    client.$speechRecognizer.on(SpeechRecognizerEvent.SpeechRecognized, this.onSpeechRecognized);
-    client.$speechSynthesizer.on(SpeechSynthesizerEvent.Speak, this.onSpeechSpeak);
+    client.on(ClientEvent.Output, this.onOutput);
+    client.speechRecognizer.on(SpeechRecognizerEvent.SpeechRecognized, this.onSpeechRecognized);
+    client.speechSynthesizer.on(SpeechSynthesizerEvent.Speak, this.onSpeechSpeak);
   }
 
   componentWillUnmount() {
     client.off(ClientEvent.Request, this.onRequest);
-    client.off(ClientEvent.Response, this.onResponse);
-    client.off(ClientEvent.Action, this.onAction);
-    client.$speechRecognizer.off(SpeechRecognizerEvent.SpeechRecognized, this.onSpeechRecognized);
-    client.$speechSynthesizer.off(SpeechSynthesizerEvent.Speak, this.onSpeechSpeak);
+    client.off(ClientEvent.Output, this.onOutput);
+    client.speechRecognizer.off(SpeechRecognizerEvent.SpeechRecognized, this.onSpeechRecognized);
+    client.speechSynthesizer.off(SpeechSynthesizerEvent.Speak, this.onSpeechSpeak);
   }
 
   render() {
@@ -84,17 +79,11 @@ class App extends React.Component<AppProps, AppState> {
     });
   };
 
-  onRequest = (req: WebRequest) => {
-    if (req.request.type === RequestType.Text || req.request.type === RequestType.TranscribedText) {
+  onRequest = (req: ClientRequest) => {
+    if (req.input?.text) {
       this.setState({
-        inputText: req.request.body.text || '',
+        inputText: req.input.text,
       });
-    }
-  };
-
-  onResponse = (res: WebResponse) => {
-    if (res.context.request.asr?.text) {
-      this.setState({ inputText: res.context.request.asr.text });
     }
   };
 
@@ -104,17 +93,16 @@ class App extends React.Component<AppProps, AppState> {
     });
   };
 
-  onAction = (action: Action) => {
-    if (action.type === ActionType.Custom) {
-      switch (action.command) {
-        case 'set-theme': {
-          this.toggleDarkMode(action.value);
-          break;
-        }
-        default:
-      }
+  onOutput = (output: NormalizedOutputTemplate) => {
+    const theme = output.platforms?.web?.theme;
+    if (this.isValidTheme(theme)) {
+      this.toggleDarkMode(theme);
     }
   };
+
+  private isValidTheme(theme?: unknown): theme is 'light' | 'dark' {
+    return !!theme && typeof theme === 'string' && ['light', 'dark'].includes(theme);
+  }
 
   private toggleDarkMode(theme: 'dark' | 'light') {
     if (theme === 'dark') {

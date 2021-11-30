@@ -1,6 +1,5 @@
-import { RequestType } from 'jovo-client-web';
+import { InputType } from '@jovotech/client-web';
 import React from 'react';
-import { Mic, Play } from 'react-feather';
 import client from './../client';
 
 export default class RecordButton extends React.Component<{
@@ -16,10 +15,36 @@ export default class RecordButton extends React.Component<{
     if (client.isRecordingInput) {
       className += 'shadow-inner animate-ripple dark:animate-ripple-dark';
     }
-    const icon = this.props.isInitialized ? (
-      <Mic className="text-gray-700 dark:text-gray-300" />
+    const icon = !this.props.isInitialized ? (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6 text-gray-700"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M13 5l7 7-7 7M5 5l7 7-7 7"
+        />
+      </svg>
     ) : (
-      <Play className="text-gray-700" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6 text-gray-700 dark:text-gray-300"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+        />
+      </svg>
     );
     return (
       <button
@@ -36,7 +61,7 @@ export default class RecordButton extends React.Component<{
   onClick = async (event: React.MouseEvent) => {
     if (!this.props.isInitialized) {
       await client.initialize();
-      await client.createRequest({ type: RequestType.Launch }).send();
+      await client.send({ type: InputType.Launch });
       window.addEventListener('keydown', this.onKeyDown);
     }
   };
@@ -50,7 +75,7 @@ export default class RecordButton extends React.Component<{
     }
 
     window.addEventListener(event.type === 'mousedown' ? 'mouseup' : 'touchend', this.onMouseUp);
-    await client.startInputRecording();
+    await client.startRecording();
   };
 
   onMouseUp = (event: MouseEvent | TouchEvent) => {
@@ -59,20 +84,20 @@ export default class RecordButton extends React.Component<{
     } else {
       window.removeEventListener('touchend', this.onMouseUp);
     }
-    client.stopInputRecording();
+    client.stopRecording();
   };
 
   onKeyDown = async (event: KeyboardEvent) => {
     if (event.key === ' ') {
       window.addEventListener('keyup', this.onKeyUp);
-      await client.startInputRecording();
+      await client.startRecording();
     }
   };
 
   onKeyUp = (event: KeyboardEvent) => {
     if (event.key === ' ') {
       window.removeEventListener('keyup', this.onKeyUp);
-      client.stopInputRecording();
+      client.stopRecording();
     }
   };
 }

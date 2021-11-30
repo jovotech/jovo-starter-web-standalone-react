@@ -1,4 +1,4 @@
-import { AudioRecorder, Client, SpeechRecognizer } from 'jovo-client-web';
+import { AudioRecorder, Client, SpeechRecognizer } from '@jovotech/client-web';
 import { action, computed, configure, makeObservable, observable } from 'mobx';
 
 // There are problems with the current implementation...
@@ -8,30 +8,34 @@ configure({
   enforceActions: 'never',
 });
 
-const client = new Client('http://localhost:4000/webhook', {
-  audioRecorder: {
-    startDetection: {
-      enabled: false,
+const client = new Client('http://localhost:3000/webhook', {
+  input: {
+    audioRecorder: {
+      startDetection: {
+        enabled: false,
+      },
+      silenceDetection: {
+        enabled: false,
+      },
     },
-    silenceDetection: {
-      enabled: false,
+    speechRecognizer: {
+      lang: 'en',
+      startDetection: {
+        enabled: false,
+      },
+      silenceDetection: {
+        enabled: false,
+      },
     },
   },
-  speechRecognizer: {
-    lang: 'en',
-    startDetection: {
+  output: {
+    reprompts: {
       enabled: false,
     },
-    silenceDetection: {
-      enabled: false,
-    },
-  },
-  repromptHandler: {
-    enabled: false,
   },
 });
 
-makeObservable<AudioRecorder & any>(client.$audioRecorder, {
+makeObservable<AudioRecorder & any>(client.audioRecorder, {
   initialized: observable,
   isInitialized: computed,
   initialize: action,
@@ -42,7 +46,7 @@ makeObservable<AudioRecorder & any>(client.$audioRecorder, {
   abort: action,
 });
 
-makeObservable<SpeechRecognizer & any>(client.$speechRecognizer, {
+makeObservable<SpeechRecognizer & any>(client.speechRecognizer, {
   recording: observable,
   isRecording: computed,
   start: action,
@@ -55,6 +59,6 @@ export default makeObservable<Client & any>(client, {
   initialized: observable,
   isInitialized: computed,
   initialize: action,
-  $audioRecorder: observable.deep,
-  $speechRecognizer: observable.deep,
-});
+  audioRecorder: observable.deep,
+  speechRecognizer: observable.deep,
+}) as Client;
